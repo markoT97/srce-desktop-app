@@ -1,33 +1,31 @@
 import React, { Component } from 'react';
-import {
-    Container,
-    Row,
-    Col,
-    Table,
-    Form,
-    Dropdown,
-    DropdownButton,
-    ButtonToolbar,
-    Button
-} from 'react-bootstrap';
+import { Container, Table, Form, Button } from 'react-bootstrap';
 import { FaUserMinus, FaUserPlus, FaPencilAlt } from 'react-icons/fa';
 import { format } from 'date-fns';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import fetchVolunteers from '../../redux/actions/fetchVolunteers';
+import insertVolunteer from '../../redux/actions/insertVolunteer';
+import deleteVolunteer from '../../redux/actions/deleteVolunteer';
+import {
+    getVolunteersError,
+    getVolunteers,
+    getVolunteersPending
+} from '../../redux/reducers/volunteersReducer';
 
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+import { Pagination } from 'react-bootstrap';
 
-class Admin extends Component {
+const itemsPerPage = 5;
+
+class AdminPanel extends Component {
     state = {
-        volunteers: [],
         inputFirstName: '',
         inputLastName: '',
-        isSaveButtonEnabled: false
+        isSaveButtonEnabled: false,
+        selectedPage: 1
     };
     componentDidMount() {
-        ipcRenderer.send('getVolunteers');
-        ipcRenderer.once('volunteersSent', (event, volunteers) => {
-            this.setState({ volunteers: volunteers });
-        });
+        this.props.fetchVolunteers(0, itemsPerPage);
     }
     handleChangeInput = event => {
         const target = event.target;
@@ -36,41 +34,57 @@ class Admin extends Component {
 
         this.setState({ [name]: value });
     };
-    handleAddVolunteer = newVolunteer => {
-        ipcRenderer.send('insertVolunteer', newVolunteer);
-        ipcRenderer.once('volunteerInserted', (event, insertedID) => {
-            if (insertedID) {
-                newVolunteer.volunteer_id = insertedID;
-                this.setState({
-                    volunteers: [...this.state.volunteers, newVolunteer],
-                    inputFirstName: '',
-                    inputLastName: ''
-                });
-            } else {
-                console.log('Something went wrong...');
-            }
-        });
+    handleOnPageSelect = offset => {
+        this.props.fetchVolunteers(offset, itemsPerPage);
+        this.setState({ selectedPage: offset / itemsPerPage + 1 });
     };
+    handleAddVolunteer = newVolunteer => {
+        this.props.insertVolunteer(newVolunteer);
+
+        this.handleOnPageSelect(0);
+
+        this.setState({ inputFirstName: '', inputLastName: '' });
+    };
+
     handleDeleteVolunteer = id => {
-        ipcRenderer.send('deleteVolunteer', id);
-        ipcRenderer.once('volunteerDeleted', (event, isDeleted) => {
-            if (isDeleted) {
-                this.setState({
-                    volunteers: this.state.volunteers.filter(
-                        v => v.volunteer_id !== id
-                    ),
-                    inputFirstName: '',
-                    inputLastName: ''
-                });
-            } else {
-                console.log('Volunteer with id: ' + id + ' does not exists.');
+        const { selectedPage } = this.state;
+        let offset = selectedPage * itemsPerPage - itemsPerPage;
+        this.props.deleteVolunteer(id);
+        this.props.fetchVolunteers(offset, itemsPerPage).then(() => {
+            const { items } = this.props.volunteers;
+            if (items.length === 0) {
+                if (selectedPage > 2) {
+                    offset = (selectedPage - 1) * itemsPerPage - itemsPerPage;
+                    this.handleOnPageSelect(offset);
+                } else {
+                    this.handleOnPageSelect(0);
+                }
             }
         });
     };
     render() {
+        const { items, numberOfPages } = this.props.volunteers;
+        let pages = [];
+        for (let number = 1; number <= numberOfPages; number++) {
+            let endOfPage = number * itemsPerPage;
+            pages.push(
+                <Pagination.Item
+                    onClick={() =>
+                        this.handleOnPageSelect(endOfPage - itemsPerPage)
+                    }
+                    key={number}
+                    active={number === this.state.selectedPage}
+                >
+                    {number}
+                </Pagination.Item>
+            );
+        }
+
+        const pagination = <Pagination>{pages}</Pagination>;
+
         return (
             <Container fluid>
-                <Table>
+                <Table className=" table-of-volunteers">
                     <thead className="thead-light">
                         <tr>
                             <th scope="col">ID</th>
@@ -81,7 +95,7 @@ class Admin extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {this.state.volunteers.map((v, i) => {
+                        {items.map((v, i) => {
                             return (
                                 <tr key={i}>
                                     <th scope="row">{v.volunteer_id}</th>
@@ -111,6 +125,12 @@ class Admin extends Component {
                                 </tr>
                             );
                         })}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colSpan="10">{pagination}</td>
+                        </tr>
+
                         <tr>
                             <td colSpan="5">
                                 <div className="border-top my-3"></div>
@@ -166,11 +186,27 @@ class Admin extends Component {
                                 </Form>
                             </td>
                         </tr>
-                    </tbody>
+                    </tfoot>
                 </Table>
             </Container>
         );
     }
 }
 
-export default Admin;
+const mapStateToProps = state => ({
+    error: getVolunteersError(state),
+    volunteers: getVolunteers(state),
+    pending: getVolunteersPending(state)
+});
+
+const mapDispatchToProps = dispatch =>
+    bindActionCreators(
+        {
+            fetchVolunteers: (offset, limit) => fetchVolunteers(offset, limit),
+            insertVolunteer: newVolunteer => insertVolunteer(newVolunteer),
+            deleteVolunteer: id => deleteVolunteer(id)
+        },
+        dispatch
+    );
+
+export default connect(mapStateToProps, mapDispatchToProps)(AdminPanel);

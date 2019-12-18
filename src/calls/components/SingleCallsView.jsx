@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Container,
     Row,
@@ -15,8 +15,8 @@ import { IoIosExit } from 'react-icons/io';
 import { ExportToCsv } from 'export-to-csv';
 import { format } from 'date-fns';
 
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+import fetchVolunteerNames from '../../redux/actions/fetchVolunteerNames';
+import { useDispatch, useSelector } from 'react-redux';
 
 const localizedCallColumns = {
     call_id: 'ID poziva',
@@ -28,8 +28,8 @@ const localizedCallColumns = {
     volunteer: 'Volonter'
 };
 
-class SingleCallsView extends Component {
-    state = {
+const SingleCallsView = () => {
+    const [state, setState] = useState({
         // Call
         callNo: 0,
         contactType: 'Vrsta kontakta',
@@ -56,117 +56,116 @@ class SingleCallsView extends Component {
         lastSuicidTry: 'Prethodni pokusaji suicida',
         shortContent: '',
         note: ''
+    });
+
+    const dispatch = useDispatch();
+    const names = useSelector(state => state.volunteers.names);
+
+    useEffect(() => {
+         dispatch(fetchVolunteerNames())
+    }, [dispatch]);
+
+const handleChangeInput = event => {
+    const target = event.target;
+    const value =
+        target.type === 'text' || target.type === 'textarea'
+            ? target.value
+            : target.textContent;
+    const name = target.name;
+
+    setState({...state, [name]: value});
+};
+
+// Buttons
+const handleSaveData = () => {
+    console.log('Save');
+};
+
+const handleUpdateData = () => {
+    console.log('Update');
+};
+
+const handleCopyData = () => {
+    console.log('Copy');
+};
+
+const handleExportToExcel = () => {
+    const callData = [
+        {
+            call_id: 1,
+            date: '12/11/2201',
+            duration: 51,
+            person: 'Joca',
+            type: 'Potrebna pomoc',
+            risk: 'veliki',
+            novo: 'novo',
+            volunteer: 'Stojkovic'
+        },
+        {
+            call_id: 2,
+            date: '12/11/2051',
+            duration: 33,
+            person: 'Ceca',
+            type: 'Potrebna pomoc',
+            risk: 'mali',
+            volunteer: 'Marko'
+        },
+        {
+            call_id: 3,
+            date: '12/11/2011',
+            duration: 15,
+            person: 'Naca',
+            type: 'Hitan slucaj',
+            risk: 'srednji',
+            volunteer: 'Ljilja'
+        },
+        {
+            call_id: 4,
+            date: '12/11/2031',
+            duration: 24,
+            person: 'Zaca',
+            type: 'Hitan slucaj',
+            risk: 'srednji',
+            volunteer: 'Ljilja'
+        },
+        {
+            call_id: 5,
+            date: '24/11/2019',
+            duration: 87,
+            person: 'Kaca',
+            type: 'Hitan slucaj',
+            risk: 'srednji',
+            volunteer: 'Ljilja'
+        }
+    ];
+
+    const headers = Object.keys(callData[0]).map(
+        (key, index) => localizedCallColumns[key]
+    );
+
+    const options = {
+        filename: 'callData-' + format(new Date(), 'dd-MM-yyyy_hh-mm'),
+        fieldSeparator: ',',
+        quoteStrings: '"',
+        decimalSeparator: '.',
+        showLabels: true,
+        showTitle: false,
+        useTextFile: false,
+        useBom: true,
+        headers
     };
 
-    componentDidMount() {
-        ipcRenderer.send('getVolunteerNames');
-        ipcRenderer.once('volunteerNamesSent', (event, volunteerNames) => {
-            this.setState({ volunteer: volunteerNames });
-        });
-    }
+    const csvExporter = new ExportToCsv(options);
 
-    handleChangeInput = event => {
-        const target = event.target;
-        const value =
-            target.type === 'text' || target.type === 'textarea'
-                ? target.value
-                : target.textContent;
-        const name = target.name;
+    csvExporter.generateCsv(callData);
+};
 
-        this.setState({ [name]: value });
-    };
+const handleExit = () => {
+    console.log('Exit');
+};
 
-    // Buttons
-    handleSaveData = () => {
-        console.log('Save');
-    };
-
-    handleUpdateData = () => {
-        console.log('Update');
-    };
-
-    handleCopyData = () => {
-        console.log('Copy');
-    };
-
-    handleExportToExcel = () => {
-        const callData = [
-            {
-                call_id: 1,
-                date: '12/11/2201',
-                duration: 51,
-                person: 'Joca',
-                type: 'Potrebna pomoc',
-                risk: 'veliki',
-                novo: 'novo',
-                volunteer: 'Stojkovic'
-            },
-            {
-                call_id: 2,
-                date: '12/11/2051',
-                duration: 33,
-                person: 'Ceca',
-                type: 'Potrebna pomoc',
-                risk: 'mali',
-                volunteer: 'Marko'
-            },
-            {
-                call_id: 3,
-                date: '12/11/2011',
-                duration: 15,
-                person: 'Naca',
-                type: 'Hitan slucaj',
-                risk: 'srednji',
-                volunteer: 'Ljilja'
-            },
-            {
-                call_id: 4,
-                date: '12/11/2031',
-                duration: 24,
-                person: 'Zaca',
-                type: 'Hitan slucaj',
-                risk: 'srednji',
-                volunteer: 'Ljilja'
-            },
-            {
-                call_id: 5,
-                date: '24/11/2019',
-                duration: 87,
-                person: 'Kaca',
-                type: 'Hitan slucaj',
-                risk: 'srednji',
-                volunteer: 'Ljilja'
-            }
-        ];
-
-        const headers = Object.keys(callData[0]).map(
-            (key, index) => localizedCallColumns[key]
-        );
-
-        const options = {
-            filename: 'callData-' + format(new Date(), 'dd-MM-yyyy_hh-mm'),
-            fieldSeparator: ',',
-            quoteStrings: '"',
-            decimalSeparator: '.',
-            showLabels: true,
-            showTitle: false,
-            useTextFile: false,
-            useBom: true,
-            headers
-        };
-
-        const csvExporter = new ExportToCsv(options);
-
-        csvExporter.generateCsv(callData);
-    };
-
-    handleExit = () => {
-        console.log('Exit');
-    };
-
-    render() {
-        return (
-            <Container>
+return (
+    <Container>
                 <Row>
                     <Col>
                         <Form>
@@ -175,7 +174,7 @@ class SingleCallsView extends Component {
                             <Form.Group controlId="formBasicCallNo">
                                 <Form.Label>Redni broj poziva</Form.Label>
                                 <Form.Control
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     type="text"
                                     placeholder="Unesite redni broj poziva"
                                     name="callNo"
@@ -185,23 +184,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.contactType}
+                                title={state.contactType}
                             >
                                 <Dropdown.Item
                                     name="contactType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Vrsta1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="contactType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Vrsta2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="contactType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Vrsta3
                                 </Dropdown.Item>
@@ -210,7 +209,7 @@ class SingleCallsView extends Component {
                             <Form.Group controlId="formBasicCallDate">
                                 <Form.Label>Datum poziva</Form.Label>
                                 <Form.Control
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     type="text"
                                     placeholder="Unesite datum poziva"
                                     name="callDate"
@@ -220,7 +219,7 @@ class SingleCallsView extends Component {
                             <Form.Group controlId="formBasicDay">
                                 <Form.Label>Dan</Form.Label>
                                 <Form.Control
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     type="text"
                                     placeholder="Unesite dan"
                                     name="callDay"
@@ -230,7 +229,7 @@ class SingleCallsView extends Component {
                             <Form.Group controlId="formBasicCallTime">
                                 <Form.Label>Vreme poziva</Form.Label>
                                 <Form.Control
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     type="text"
                                     placeholder="Unesite vreme poziva"
                                     name="callTime"
@@ -240,7 +239,7 @@ class SingleCallsView extends Component {
                             <Form.Group controlId="formBasicCallDuration">
                                 <Form.Label>Trajanje poziva</Form.Label>
                                 <Form.Control
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     type="text"
                                     placeholder="Unesite trajanje poziva"
                                     name="callDur"
@@ -250,23 +249,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.callType}
+                                title={state.callType}
                             >
                                 <Dropdown.Item
                                     name="callType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Vrsta1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="callType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Vrsta2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="callType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Vrsta3
                                 </Dropdown.Item>
@@ -283,7 +282,7 @@ class SingleCallsView extends Component {
                             <Form.Group controlId="formBasicName">
                                 <Form.Label>Ime ili nadimak</Form.Label>
                                 <Form.Control
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     type="text"
                                     placeholder="Unesite ime ili nadimak"
                                     name="callName"
@@ -293,23 +292,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.gender}
+                                title={state.gender}
                             >
                                 <Dropdown.Item
                                     name="gender"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Pol1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="gender"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Pol2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="gender"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Pol3
                                 </Dropdown.Item>
@@ -318,23 +317,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.age}
+                                title={state.age}
                             >
                                 <Dropdown.Item
                                     name="age"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     St1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="age"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     St2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="age"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     St3
                                 </Dropdown.Item>
@@ -343,23 +342,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.maritalStatus}
+                                title={state.maritalStatus}
                             >
                                 <Dropdown.Item
                                     name="maritalStatus"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Bs1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="maritalStatus"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Bs2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="maritalStatus"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Bs3
                                 </Dropdown.Item>
@@ -368,23 +367,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.numOfCall}
+                                title={state.numOfCall}
                             >
                                 <Dropdown.Item
                                     name="numOfCall"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Prvi
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="numOfCall"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Drugi
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="numOfCall"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Treci
                                 </Dropdown.Item>
@@ -393,23 +392,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.planInvolvement}
+                                title={state.planInvolvement}
                             >
                                 <Dropdown.Item
                                     name="planInvolvement"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Plan1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="planInvolvement"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Plan2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="planInvolvement"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Plan3
                                 </Dropdown.Item>
@@ -418,19 +417,19 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.selectedVolunteer}
+                                title={state.selectedVolunteer}
                             >
-                                {this.state.volunteer.map((v, i) => {
+                                {names.map((v, i) => {
                                     return (
                                         <Dropdown.Item
                                             key={i}
                                             name="selectedVolunteer"
-                                            onClick={this.handleChangeInput}
+                                            onClick={handleChangeInput}
                                             active={
                                                 v.first_name +
                                                     ' ' +
                                                     v.last_name ===
-                                                this.state.selectedVolunteer
+                                                state.selectedVolunteer
                                             }
                                         >
                                             {v.first_name + ' ' + v.last_name}
@@ -452,23 +451,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.problemType}
+                                title={state.problemType}
                             >
                                 <Dropdown.Item
                                     name="problemType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Prob1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="problemType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Prob2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="problemType"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     Prob3
                                 </Dropdown.Item>
@@ -477,23 +476,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.suicidRisk}
+                                title={state.suicidRisk}
                             >
                                 <Dropdown.Item
                                     name="suicidRisk"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     s1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="suicidRisk"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     s2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="suicidRisk"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     s3
                                 </Dropdown.Item>
@@ -502,23 +501,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.suicidFactor}
+                                title={state.suicidFactor}
                             >
                                 <Dropdown.Item
                                     name="suicidFactor"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     sf1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="suicidFactor"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     sf2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="suicidFactor"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     sf3
                                 </Dropdown.Item>
@@ -527,23 +526,23 @@ class SingleCallsView extends Component {
                             <DropdownButton
                                 variant="outline-secondary"
                                 id="dropdown-basic-button"
-                                title={this.state.lastSuicidTry}
+                                title={state.lastSuicidTry}
                             >
                                 <Dropdown.Item
                                     name="lastSuicidTry"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     p1
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="lastSuicidTry"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     p2
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                     name="lastSuicidTry"
-                                    onClick={this.handleChangeInput}
+                                    onClick={handleChangeInput}
                                 >
                                     p3
                                 </Dropdown.Item>
@@ -558,7 +557,7 @@ class SingleCallsView extends Component {
                                 <Form.Control
                                     as="textarea"
                                     rows="2"
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     name="shortContent"
                                 />
                             </Form.Group>
@@ -568,7 +567,7 @@ class SingleCallsView extends Component {
                                 <Form.Control
                                     as="textarea"
                                     rows="3"
-                                    onChange={this.handleChangeInput}
+                                    onChange={handleChangeInput}
                                     name="note"
                                 />
                             </Form.Group>
@@ -580,35 +579,35 @@ class SingleCallsView extends Component {
                     <Col xs={10} lg={8}>
                         <ButtonToolbar className="call-form-buttons">
                             <Button
-                                onClick={this.handleSaveData}
+                                onClick={handleSaveData}
                                 variant="outline-primary"
                             >
                                 <FaSave />
                                 &nbsp;Snimi
                             </Button>
                             <Button
-                                onClick={this.handleUpdateData}
+                                onClick={handleUpdateData}
                                 variant="outline-secondary"
                             >
                                 <FaPencilAlt />
                                 &nbsp;Izmeni
                             </Button>
                             <Button
-                                onClick={this.handleCopyData}
+                                onClick={handleCopyData}
                                 variant="outline-warning"
                             >
                                 <FaCopy />
                                 &nbsp;Kopiraj
                             </Button>
                             <Button
-                                onClick={this.handleExportToExcel}
+                                onClick={handleExportToExcel}
                                 variant="outline-success"
                             >
                                 <FaFileCsv />
                                 &nbsp;Prebaci u CSV
                             </Button>
                             <Button
-                                onClick={this.handleExit}
+                                onClick={handleExit}
                                 variant="outline-danger"
                             >
                                 <IoIosExit />
@@ -618,7 +617,7 @@ class SingleCallsView extends Component {
                     </Col>
                 </Row>
             </Container>
-        );
-    }
-}
+)
+};
+
 export default SingleCallsView;

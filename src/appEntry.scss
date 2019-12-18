@@ -42,3 +42,21 @@ button {
 .call-form-buttons {
     margin: 2em 0 2em 0;
 }
+
+.table-of-volunteers {
+    thead,
+    tbody,
+    tr {
+        display: table;
+        width: 100%;
+        min-width: 23em;
+        table-layout: fixed;
+    }
+    tbody {
+        height: 20em;
+        table-layout: fixed;
+        overflow: auto;
+        display: block;
+        width: 100%;
+    }
+}
