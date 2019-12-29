@@ -1,5 +1,5 @@
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+const { ipcRenderer } = window;
+const { channels } = window;
 
 export const DELETE_VOLUNTEER_SUCCESS = 'DELETE_VOLUNTEER_SUCCESS';
 export const DELETE_VOLUNTEER_ERROR = 'DELETE_VOLUNTEER_ERROR';
@@ -20,8 +20,8 @@ export function deleteVolunteerError(error) {
 
 function deleteVolunteer(id) {
     return dispatch => {
-        ipcRenderer.send('deleteVolunteer', id);
-        ipcRenderer.once('volunteerDeleted', (event, isDeleted) => {
+        ipcRenderer.send(channels.DELETE_VOLUNTEER, id);
+        ipcRenderer.once(channels.DELETE_VOLUNTEER, (event, isDeleted) => {
             if (isDeleted) {
                 dispatch(deleteVolunteerSuccess(id));
             } else {

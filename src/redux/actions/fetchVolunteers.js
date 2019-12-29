@@ -1,5 +1,5 @@
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+const { ipcRenderer } = window;
+const { channels } = window;
 
 export const FETCH_VOLUNTEERS_PENDING = 'FETCH_VOLUNTEERS_PENDING';
 export const FETCH_VOLUNTEERS_SUCCESS = 'FETCH_VOLUNTEERS_SUCCESS';
@@ -30,11 +30,11 @@ function fetchVolunteers(offset, limit) {
     return async dispatch => {
         dispatch(fetchVolunteersPending());
         await new Promise(resolve => {
-            ipcRenderer.send('getVolunteers', {
+            ipcRenderer.send(channels.GET_VOLUNTEERS, {
                 offset: offset,
                 limit: limit
             });
-            ipcRenderer.once('volunteersSent', (event, result) => {
+            ipcRenderer.once(channels.GET_VOLUNTEERS, (event, result) => {
                 let numberOfPages = Math.floor(result.count / limit);
                 result.count % limit > 0
                     ? (numberOfPages += 1)

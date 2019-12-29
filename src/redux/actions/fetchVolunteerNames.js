@@ -1,5 +1,5 @@
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+const { ipcRenderer } = window;
+const { channels } = window;
 
 export const FETCH_VOLUNTEER_NAMES_PENDING = 'FETCH_VOLUNTEER_NAMES_PENDING';
 export const FETCH_VOLUNTEER_NAMES_SUCCESS = 'FETCH_VOLUNTEER_NAMES_SUCCESS';
@@ -28,16 +28,11 @@ export function fetchVolunteerNamesError(error) {
 function fetchVolunteerNames() {
     return dispatch => {
         dispatch(fetchVolunteerNamesPending());
-        new Promise(resolve => {
-            ipcRenderer.send('getVolunteerNames');
-            ipcRenderer.once('volunteerNamesSent', (event, volunteerNames) => {
-                resolve(volunteerNames);
-            });
-        })
-            .then(result => {
-                dispatch(fetchVolunteerNamesSuccess(result));
-            })
-            .catch(error => dispatch(fetchVolunteerNamesError(error)));
+
+        ipcRenderer.send(channels.GET_VOLUNTEER_NAMES);
+        ipcRenderer.once(channels.GET_VOLUNTEER_NAMES, (event, result) => {
+            dispatch(fetchVolunteerNamesSuccess(result));
+        });
     };
 }
 

@@ -1,63 +1,53 @@
 {
+  "main": "electron/main.js",
+  "homepage": "./",
+  "name": "srce-desktop-app",
   "description": "Desktop application for Centar Srce",
   "license": "MIT",
+  "version": "0.1.0",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/markoT97/srce-desktop-app.git"
   },
-  "scripts": {
-    "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000 && electron .\"",
-    "react-start": "react-scripts start",
-    "build": "react-scripts build"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.5.4",
-    "@babel/preset-env": "^7.5.4",
-    "@babel/preset-react": "^7.0.0",
-    "autoprefixer": "^9.5.1",
-    "babel-loader": "^8.0.6",
-    "bootstrap": "^4.3.1",
-    "css-loader": "^2.1.1",
-    "electron": "^7.1.2",
-    "electron-rebuild": "^1.8.8",
-    "html-webpack-plugin": "^3.2.0",
-    "jquery": "^3.4.0",
-    "node-sass": "^4.12.0",
-    "popper.js": "^1.14.3",
-    "postcss-loader": "^3.0.0",
-    "prettier": "^1.17.1",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "react-scripts": "^3.3.0",
-    "sass-loader": "^7.1.0",
-    "style-loader": "^0.23.1",
-    "webpack-cli": "^3.3.1"
-  },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cli.js": "^1.0.2",
-    "concurrently": "^5.0.0",
-    "d3-array": "^2.4.0",
-    "d3-axis": "^1.0.12",
-    "d3-brush": "^1.1.5",
-    "d3-geo": "^1.11.9",
-    "d3-selection": "^1.4.1",
-    "d3-shape": "^1.3.7",
-    "d3-svg-legend": "^2.25.6",
-    "d3-transition": "^1.3.2",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "bootstrap": "^4.4.1",
+    "concurrently": "^5.0.2",
+    "date-fns": "^2.8.1",
+    "electron-devtools-installer": "^2.2.4",
+    "electron-is-dev": "^1.1.0",
+    "electron-reload": "^1.5.0",
     "export-to-csv": "^0.2.1",
-    "node-gyp": "^6.0.1",
-    "react-bootstrap": "1.0.0-beta.16",
+    "jquery": "^3.4.1",
+    "node-sass": "^4.13.0",
+    "react": "^16.12.0",
+    "react-bootstrap": "^1.0.0-beta.16",
+    "react-dom": "^16.12.0",
     "react-icons": "^3.8.0",
     "react-redux": "^7.1.3",
-    "react-router-dom": "^5.0.1",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.3.0",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
-    "reflect-metadata": "^0.1.13",
-    "sequelize": "^5.21.2",
-    "sequelize-cli": "^5.5.1",
-    "sqlite3": "^4.1.0",
+    "sequelize": "^5.21.3",
+    "sqlite3": "^4.1.1",
     "wait-on": "^3.3.0"
+  },
+  "scripts": {
+    "start": "concurrently \"npm run react-start\" \"wait-on http://localhost:3000 && npm run electron-start\"",
+    "build-react": "react-app-rewired build",
+    "build-electron": "mkdir build\\src && robocopy electron build\\electron /S & robocopy src\\shared build\\src\\shared /S",
+    "test": "react-app-rewired test --env=jsdom",
+    "eject": "react-scripts eject",
+    "react-start": "react-app-rewired start",
+    "electron-start": "set ELECTRON_START_URL=http://localhost:3000 && electron .",
+    "package": "electron-builder build --win -c.extraMetadata.main=build/electron/main.js --publish never"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
   },
   "browserslist": {
     "production": [
@@ -69,6 +59,27 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "devtron": "^1.4.0",
+    "electron": "^7.1.7",
+    "electron-builder": "^21.2.0",
+    "electron-rebuild": "^1.8.8",
+    "react-app-rewired": "^2.1.5"
+  },
+  "build": {
+    "files": [
+      "build/**/*",
+      "node_modules/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "repo": "electron-cra-example",
+      "owner": "markoT97"
+    },
+    "asarUnpack": [
+      "**/srce.db"
     ]
   }
 }

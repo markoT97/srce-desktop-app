@@ -4,3 +4,5 @@ yarn.lock
 .vscode/
 **/*.db
 public/js/
+build
+dist

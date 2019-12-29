@@ -62,7 +62,7 @@ const SingleCallsView = () => {
     const names = useSelector(state => state.volunteers.names);
 
     useEffect(() => {
-         dispatch(fetchVolunteerNames())
+        dispatch(fetchVolunteerNames())  
     }, [dispatch]);
 
 const handleChangeInput = event => {

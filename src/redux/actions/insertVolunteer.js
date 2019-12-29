@@ -1,5 +1,5 @@
-const electron = window.require('electron');
-const ipcRenderer = electron.ipcRenderer;
+const { ipcRenderer } = window;
+const { channels } = window;
 
 export const INSERT_VOLUNTEER_SUCCESS = 'INSERT_VOLUNTEER_SUCCESS';
 export const INSERT_VOLUNTEER_ERROR = 'INSERT_VOLUNTEER_ERROR';
@@ -20,8 +20,8 @@ export function insertVolunteerError(error) {
 
 function insertVolunteer(newVolunteer) {
     return dispatch => {
-        ipcRenderer.send('insertVolunteer', newVolunteer);
-        ipcRenderer.once('volunteerInserted', (event, insertedID) => {
+        ipcRenderer.send(channels.INSERT_VOLUNTEER, newVolunteer);
+        ipcRenderer.once(channels.INSERT_VOLUNTEER, (event, insertedID) => {
             if (insertedID) {
                 newVolunteer.volunteer_id = insertedID;
                 dispatch(insertVolunteerSuccess(newVolunteer));
